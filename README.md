@@ -1,2 +1,2 @@
-# tuix_aduio_nodes
+# tuix_audio_nodes
 Audio node graph using tuix
