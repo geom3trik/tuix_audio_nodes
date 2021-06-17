@@ -2,7 +2,7 @@ use tuix::*;
 use ui::*;
 
 pub mod ui;
-pub mod graph;
+pub mod context;
 pub mod document;
 
 const STYLE: &str = r#"

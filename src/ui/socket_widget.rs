@@ -59,7 +59,6 @@ impl Widget for ConnectionWidget {
                 }
 
                 NodeEvent::Disconnect => {
-                    self.input_socket = Entity::null();
                     self.output_socket = Entity::null();
                 }
 
@@ -162,7 +161,6 @@ impl Widget for InputSocket {
                 WindowEvent::MouseOut => {
                     
                     if self.connected_output != Entity::null() && self.connecting {
-                        println!("Out");
                         state.insert_event(Event::new(NodeEvent::Disconnect).direct(entity).origin(entity));
                         state.insert_event(Event::new(NodeEvent::Disconnect).direct(self.connected_output).origin(entity));
                         self.connecting = false;
@@ -456,9 +454,7 @@ impl Widget for OutputSocket {
 
                 NodeEvent::ConnectInput => {
                     if event.target == entity {
-                        println!("Connect Input to Output");
                         state.insert_event(Event::new(NodeEvent::ConnectOutput).direct(event.origin).origin(entity));
-                        //state.insert_event(Event::new(NodeEvent::ConnectSockets(entity, event.origin)).direct(self.connection).origin(entity));
                     }
                 }
 
