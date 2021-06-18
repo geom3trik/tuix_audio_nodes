@@ -25,4 +25,6 @@ pub enum NodeEvent {
     Snap(Entity, Entity),
     Connecting,
     Disconnect,
+    SelectNode(Entity),
+    DeselectNode(Entity),
 }

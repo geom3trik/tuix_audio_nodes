@@ -12,6 +12,8 @@ use femtovg::{
 use super::node_widget::*;
 use super::socket_widget::*;
 
+use super::NodeEvent;
+
 pub struct NodeView {
     translate_x: f32,
     translate_y: f32,
@@ -22,6 +24,8 @@ pub struct NodeView {
     panning: bool,
 
     canvas: Entity,
+
+    selected_nodes: Vec<Entity>,
 }
 
 impl NodeView {
@@ -36,6 +40,8 @@ impl NodeView {
             panning: false,
 
             canvas: Entity::null(),
+
+            selected_nodes: Vec::new(),
         }
     }
 }
@@ -258,6 +264,20 @@ impl Widget for NodeView {
 
                         _=> {}
                     }
+                }
+
+                _=> {}
+            }
+        }
+    
+        if let Some(node_event) = event.message.downcast() {
+            match node_event {
+                NodeEvent::SelectNode(node) => {
+                    self.selected_nodes.push(*node);
+                }
+
+                NodeEvent::DeselectNode(node) => {
+                    
                 }
 
                 _=> {}
