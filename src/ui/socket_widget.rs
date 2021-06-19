@@ -126,7 +126,8 @@ impl Widget for InputSocket {
                     if *button == MouseButton::Left {
                         state.capture(entity);
                         self.connecting = true;
-                        state.insert_event(Event::new(WindowEvent::Redraw).target(Entity::root()));
+                        //state.insert_event(Event::new(WindowEvent::Redraw).target(Entity::root()));
+                        entity.emit(state, Entity::root(), Event::new(WindowEvent::Redraw));
                         entity.set_z_order(state, 1);
                     }
                 }
@@ -137,7 +138,8 @@ impl Widget for InputSocket {
                             self.connecting = false;
                             state.insert_event(Event::new(WindowEvent::Redraw).target(Entity::root()));
                             //state.insert_event(Event::new(NodeEvent::ConnectSockets(entity, state.hovered)).direct(state.hovered).origin(entity));
-                            state.insert_event(Event::new(NodeEvent::ConnectInput).direct(state.hovered).origin(entity));
+                            //state.insert_event(Event::new(NodeEvent::ConnectInput).direct(state.hovered).origin(entity));
+                            entity.emit(state, state.hovered, Event::new(NodeEvent::ConnectInput));
                             entity.set_z_order(state, 0);                            
                         }
                         state.release(entity);
@@ -445,12 +447,6 @@ impl Widget for OutputSocket {
 
         if let Some(node_event) = event.message.downcast() {
             match node_event {
-                // NodeEvent::ConnectSockets(input, output) => {
-                //     if event.target == entity && event.origin != entity {
-                        
-                //         state.insert_event(Event::new(NodeEvent::ConnectSockets(*input, *output)).direct(self.connection).origin(entity));
-                //     }
-                // }
 
                 NodeEvent::ConnectInput => {
                     if event.target == entity {
@@ -598,27 +594,19 @@ impl Widget for OutputSocket {
             );
         }
 
-        // Fill with background color
-        let mut paint = Paint::color(background_color);
+        let paint = Paint::color(background_color);
 
         canvas.fill_path(&mut path, paint);
 
         canvas.restore();
 
-        // canvas.save();
-
-        // let origin = state.data.get_origin(entity);
-        let mut transform = state.data.get_transform(entity);
         
-        // canvas.translate(origin.0, origin.1);
-        // canvas.set_transform(transform[0], transform[1], transform[2], transform[3], transform[4], transform[5]);
-        // canvas.translate(-origin.0, -origin.1);
-
-        // transform start point into local frame
-        //transform.inverse();
-        let (px, py) = transform.transform_point(bounds.x + bounds.w / 2.0, bounds.y + bounds.h / 2.0);
 
         if self.connecting {
+
+            let transform = state.data.get_transform(entity);
+            let (px, py) = transform.transform_point(bounds.x + bounds.w / 2.0, bounds.y + bounds.h / 2.0);
+
             let mut path = Path::new();
             path.move_to(px, py);
             if self.snapping {
@@ -650,6 +638,122 @@ impl Widget for OutputSocket {
     }
 }
 
-fn draw_socket() {
+fn draw_socket(state: &mut State, entity: Entity, canvas: &mut Canvas<OpenGl>) {
+    let bounds = state.data.get_bounds(entity);
 
+    let background_color = entity.get_background_color(state);
+
+    let opacity = state.data.get_opacity(entity);
+
+    let parent = state
+        .hierarchy
+        .get_parent(entity)
+        .expect("Failed to find parent somehow");
+
+    let parent_width = state.data.get_width(parent);
+    let parent_height = state.data.get_height(parent);
+
+    let border_radius_top_left = match state
+        .style
+        .border_radius_top_left
+        .get(entity)
+        .cloned()
+        .unwrap_or_default()
+    {
+        Units::Pixels(val) => val,
+        Units::Percentage(val) => parent_width * val,
+        _ => 0.0,
+    };
+
+    let border_radius_top_right = match state
+        .style
+        .border_radius_top_right
+        .get(entity)
+        .cloned()
+        .unwrap_or_default()
+    {
+        Units::Pixels(val) => val,
+        Units::Percentage(val) => parent_width * val,
+        _ => 0.0,
+    };
+
+    let border_radius_bottom_left = match state
+        .style
+        .border_radius_bottom_left
+        .get(entity)
+        .cloned()
+        .unwrap_or_default()
+    {
+        Units::Pixels(val) => val,
+        Units::Percentage(val) => parent_width * val,
+        _ => 0.0,
+    };
+
+    let border_radius_bottom_right = match state
+        .style
+        .border_radius_bottom_right
+        .get(entity)
+        .cloned()
+        .unwrap_or_default()
+    {
+        Units::Pixels(val) => val,
+        Units::Percentage(val) => parent_width * val,
+        _ => 0.0,
+    };
+
+    let border_width = match state
+        .style
+        .border_width
+        .get(entity)
+        .cloned()
+        .unwrap_or_default()
+    {
+        Units::Pixels(val) => val,
+        Units::Percentage(val) => parent_width * val,
+        _ => 0.0,
+    };
+
+    let mut background_color: femtovg::Color = background_color.into();
+    background_color.set_alphaf(background_color.a * opacity);
+
+    canvas.save();
+
+    let origin = state.data.get_origin(entity);
+    let transform = state.data.get_transform(entity);
+    
+    canvas.set_transform(transform[0], transform[1], transform[2], transform[3], transform[4], transform[5]);
+
+    canvas.translate(bounds.x, bounds.y);
+
+    let mut path = Path::new();
+
+    if border_radius_bottom_left == (bounds.w - 2.0 * border_width) / 2.0
+        && border_radius_bottom_right == (bounds.w - 2.0 * border_width) / 2.0
+        && border_radius_top_left == (bounds.w - 2.0 * border_width) / 2.0
+        && border_radius_top_right == (bounds.w - 2.0 * border_width) / 2.0
+    {
+        path.circle(
+            0.0 + (border_width / 2.0) + (bounds.w - border_width) / 2.0,
+            0.0 + (border_width / 2.0) + (bounds.h - border_width) / 2.0,
+            bounds.w / 2.0,
+        );
+    } else {
+        // Draw rounded rect
+        path.rounded_rect_varying(
+            (border_width / 2.0),
+            (border_width / 2.0),
+            bounds.w - border_width,
+            bounds.h - border_width,
+            border_radius_top_left,
+            border_radius_top_right,
+            border_radius_bottom_right,
+            border_radius_bottom_left,
+        );
+    }
+
+    let paint = Paint::color(background_color);
+
+    canvas.fill_path(&mut path, paint);
+
+    canvas.restore();
 }
