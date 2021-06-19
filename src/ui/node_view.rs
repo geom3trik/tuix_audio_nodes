@@ -264,8 +264,4 @@ impl Widget for NodeView {
             }
         }
     }
-
-    // fn on_draw(&mut self, state: &mut State, entity: Entity, canvas: &mut Canvas<OpenGl>) {
-    //     canvas.translate(self.translate_x, self.translate_y);
-    // }
 }
