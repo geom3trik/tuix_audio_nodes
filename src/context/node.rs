@@ -1,8 +1,4 @@
-
-
-pub enum NodeType {
-
-}
+pub enum NodeType {}
 
 pub enum SocketType {
     Input,
@@ -16,8 +12,6 @@ pub struct SocketData {
 }
 
 pub struct Program {
-    
     sockets: Vec<f32>,
     data: Vec<f32>,
-
 }

@@ -1,11 +1,10 @@
-use tuix::*;
 use femtovg::{
-    Canvas, renderer::OpenGl, Align, Baseline, FillRule, FontId, ImageFlags, ImageId, LineCap, LineJoin,
-    Paint, Path, Renderer, Solidity,
+    renderer::OpenGl, Align, Baseline, Canvas, FillRule, FontId, ImageFlags, ImageId, LineCap,
+    LineJoin, Paint, Path, Renderer, Solidity,
 };
+use tuix::*;
 
 use super::NodeEvent;
-
 
 // Widget for the connecting wire between an output and input socket
 pub struct ConnectionWidget {
@@ -30,19 +29,37 @@ impl Widget for ConnectionWidget {
 
     fn on_draw(&mut self, state: &mut State, entity: Entity, canvas: &mut Canvas<OpenGl>) {
         if self.input_socket != Entity::null() && self.output_socket != Entity::null() {
-
             let transform = state.data.get_transform(entity);
-            
+
             canvas.save();
-            canvas.set_transform(transform[0], transform[1], transform[2], transform[3], transform[4], transform[5]);
+            canvas.set_transform(
+                transform[0],
+                transform[1],
+                transform[2],
+                transform[3],
+                transform[4],
+                transform[5],
+            );
 
             let input_bounds = state.data.get_bounds(self.input_socket);
             let output_bounds = state.data.get_bounds(self.output_socket);
 
             let mut path = Path::new();
-            path.move_to(output_bounds.x + output_bounds.w / 2.0, output_bounds.y + output_bounds.h / 2.0);
-            let mid_x = ((input_bounds.x + input_bounds.w / 2.0) - (output_bounds.x + output_bounds.w / 2.0)) / 2.0;
-            path.bezier_to((input_bounds.x + input_bounds.w / 2.0) - mid_x, output_bounds.y + output_bounds.h / 2.0, (output_bounds.x + output_bounds.w / 2.0) + mid_x, input_bounds.y + input_bounds.h / 2.0, input_bounds.x + input_bounds.w / 2.0, input_bounds.y + input_bounds.h / 2.0);
+            path.move_to(
+                output_bounds.x + output_bounds.w / 2.0,
+                output_bounds.y + output_bounds.h / 2.0,
+            );
+            let mid_x = ((input_bounds.x + input_bounds.w / 2.0)
+                - (output_bounds.x + output_bounds.w / 2.0))
+                / 2.0;
+            path.bezier_to(
+                (input_bounds.x + input_bounds.w / 2.0) - mid_x,
+                output_bounds.y + output_bounds.h / 2.0,
+                (output_bounds.x + output_bounds.w / 2.0) + mid_x,
+                input_bounds.y + input_bounds.h / 2.0,
+                input_bounds.x + input_bounds.w / 2.0,
+                input_bounds.y + input_bounds.h / 2.0,
+            );
             let mut paint = Paint::color(femtovg::Color::rgb(200, 200, 200));
             paint.set_line_width(2.0);
             canvas.stroke_path(&mut path, paint);
@@ -53,7 +70,6 @@ impl Widget for ConnectionWidget {
     fn on_event(&mut self, state: &mut State, entity: Entity, event: &mut Event) {
         if let Some(node_event) = event.message.downcast() {
             match node_event {
-                
                 NodeEvent::ConnectSockets(output) => {
                     self.output_socket = *output;
                 }
@@ -62,7 +78,7 @@ impl Widget for ConnectionWidget {
                     self.output_socket = Entity::null();
                 }
 
-                _=> {}
+                _ => {}
             }
         }
     }
@@ -96,7 +112,7 @@ impl InputSocket {
 impl Widget for InputSocket {
     type Ret = Entity;
     fn on_build(&mut self, state: &mut State, entity: Entity) -> Self::Ret {
-        Element::new().build(state, entity, |builder| 
+        Element::new().build(state, entity, |builder| {
             builder
                 .set_width(Pixels(10.0))
                 .set_height(Pixels(10.0))
@@ -105,14 +121,11 @@ impl Widget for InputSocket {
                 .set_space(Pixels(5.0))
                 .set_hoverability(false)
                 .class("socket")
-        );
+        });
 
-        self.connection = ConnectionWidget::new(entity).build(state, entity, |builder| 
-            builder
-                .set_hoverability(false)
-                
-        );
-        
+        self.connection = ConnectionWidget::new(entity)
+            .build(state, entity, |builder| builder.set_hoverability(false));
+
         entity
             .set_width(state, Pixels(20.0))
             .set_height(state, Pixels(20.0))
@@ -136,20 +149,25 @@ impl Widget for InputSocket {
                     if *button == MouseButton::Left {
                         if self.connecting {
                             self.connecting = false;
-                            state.insert_event(Event::new(WindowEvent::Redraw).target(Entity::root()));
+                            state.insert_event(
+                                Event::new(WindowEvent::Redraw).target(Entity::root()),
+                            );
                             //state.insert_event(Event::new(NodeEvent::ConnectSockets(entity, state.hovered)).direct(state.hovered).origin(entity));
                             //state.insert_event(Event::new(NodeEvent::ConnectInput).direct(state.hovered).origin(entity));
                             entity.emit(state, state.hovered, Event::new(NodeEvent::ConnectInput));
-                            entity.set_z_order(state, 0);                            
+                            entity.set_z_order(state, 0);
                         }
                         state.release(entity);
-
                     }
                 }
 
-                WindowEvent::MouseMove(x,y) => {
+                WindowEvent::MouseMove(x, y) => {
                     if event.target == entity {
-                        state.insert_event(Event::new(NodeEvent::TrySnap(entity, state.hovered)).direct(state.hovered).origin(entity));
+                        state.insert_event(
+                            Event::new(NodeEvent::TrySnap(entity, state.hovered))
+                                .direct(state.hovered)
+                                .origin(entity),
+                        );
                         state.insert_event(Event::new(WindowEvent::Redraw).target(Entity::root()));
                         if state.hovered == self.snapped_socket {
                             self.snapping = true;
@@ -157,29 +175,38 @@ impl Widget for InputSocket {
                             self.snapping = false;
                         }
                     }
-                    
                 }
 
                 WindowEvent::MouseOut => {
-                    
                     if self.connected_output != Entity::null() && self.connecting {
-                        state.insert_event(Event::new(NodeEvent::Disconnect).direct(entity).origin(entity));
-                        state.insert_event(Event::new(NodeEvent::Disconnect).direct(self.connected_output).origin(entity));
+                        state.insert_event(
+                            Event::new(NodeEvent::Disconnect)
+                                .direct(entity)
+                                .origin(entity),
+                        );
+                        state.insert_event(
+                            Event::new(NodeEvent::Disconnect)
+                                .direct(self.connected_output)
+                                .origin(entity),
+                        );
                         self.connecting = false;
                     }
                 }
 
-                _=> {}
+                _ => {}
             }
         }
 
         if let Some(node_event) = event.message.downcast() {
             match node_event {
-
                 NodeEvent::ConnectOutput => {
                     if event.target == entity && event.origin != entity {
                         self.connected_output = event.origin;
-                        state.insert_event(Event::new(NodeEvent::ConnectSockets(event.origin)).direct(self.connection).origin(entity));
+                        state.insert_event(
+                            Event::new(NodeEvent::ConnectSockets(event.origin))
+                                .direct(self.connection)
+                                .origin(entity),
+                        );
                     }
                 }
 
@@ -188,17 +215,25 @@ impl Widget for InputSocket {
                 }
 
                 NodeEvent::TrySnap(input, output) => {
-                    state.insert_event(Event::new(NodeEvent::Snap(*input, *output)).direct(event.origin).origin(entity));
+                    state.insert_event(
+                        Event::new(NodeEvent::Snap(*input, *output))
+                            .direct(event.origin)
+                            .origin(entity),
+                    );
                 }
 
                 NodeEvent::Disconnect => {
                     if event.target == entity {
-                        state.insert_event(Event::new(NodeEvent::Disconnect).direct(self.connection).origin(entity));
+                        state.insert_event(
+                            Event::new(NodeEvent::Disconnect)
+                                .direct(self.connection)
+                                .origin(entity),
+                        );
                         self.connected_output = Entity::null();
                     }
                 }
 
-                _=> {}
+                _ => {}
             }
         }
     }
@@ -290,8 +325,15 @@ impl Widget for InputSocket {
 
         let origin = state.data.get_origin(entity);
         let transform = state.data.get_transform(entity);
-        
-        canvas.set_transform(transform[0], transform[1], transform[2], transform[3], transform[4], transform[5]);
+
+        canvas.set_transform(
+            transform[0],
+            transform[1],
+            transform[2],
+            transform[3],
+            transform[4],
+            transform[5],
+        );
 
         canvas.translate(bounds.x, bounds.y);
 
@@ -332,30 +374,40 @@ impl Widget for InputSocket {
 
         // let origin = state.data.get_origin(entity);
         let mut transform = state.data.get_transform(entity);
-        
+
         // canvas.translate(origin.0, origin.1);
         // canvas.set_transform(transform[0], transform[1], transform[2], transform[3], transform[4], transform[5]);
         // canvas.translate(-origin.0, -origin.1);
 
         // transform start point into local frame
         //transform.inverse();
-        let (px, py) = transform.transform_point(bounds.x + bounds.w / 2.0, bounds.y + bounds.h / 2.0);
+        let (px, py) =
+            transform.transform_point(bounds.x + bounds.w / 2.0, bounds.y + bounds.h / 2.0);
 
         if self.connecting {
             let mut path = Path::new();
             path.move_to(px, py);
             if self.snapping {
                 let snapped_socket = state.data.get_bounds(state.hovered);
-                let (sx, sy) = transform.transform_point(snapped_socket.x + snapped_socket.w / 2.0, snapped_socket.y + snapped_socket.h / 2.0);
+                let (sx, sy) = transform.transform_point(
+                    snapped_socket.x + snapped_socket.w / 2.0,
+                    snapped_socket.y + snapped_socket.h / 2.0,
+                );
                 let mid_x = (sx - px) / 2.0;
                 path.bezier_to(sx - mid_x, py, px + mid_x, sy, sx, sy);
                 //path.line_to(sx, sy);
             } else {
-                
                 //transform.inverse();
                 //let (mx, my) = transform.transform_point(state.mouse.cursorx, state.mouse.cursory);
                 let mid_x = (state.mouse.cursorx - px) / 2.0;
-                path.bezier_to(state.mouse.cursorx - mid_x, py, px + mid_x, state.mouse.cursory, state.mouse.cursorx, state.mouse.cursory);
+                path.bezier_to(
+                    state.mouse.cursorx - mid_x,
+                    py,
+                    px + mid_x,
+                    state.mouse.cursory,
+                    state.mouse.cursorx,
+                    state.mouse.cursory,
+                );
                 //path.line_to(state.mouse.cursorx, state.mouse.cursory);
             }
             let mut paint = Paint::color(femtovg::Color::rgb(200, 200, 200));
@@ -388,7 +440,7 @@ impl OutputSocket {
 impl Widget for OutputSocket {
     type Ret = Entity;
     fn on_build(&mut self, state: &mut State, entity: Entity) -> Self::Ret {
-        Element::new().build(state, entity, |builder| 
+        Element::new().build(state, entity, |builder| {
             builder
                 .set_width(Pixels(10.0))
                 .set_height(Pixels(10.0))
@@ -397,8 +449,8 @@ impl Widget for OutputSocket {
                 .set_space(Pixels(5.0))
                 .set_hoverability(false)
                 .class("socket")
-        );
-        
+        });
+
         entity
             .set_width(state, Pixels(20.0))
             .set_height(state, Pixels(20.0))
@@ -422,15 +474,23 @@ impl Widget for OutputSocket {
                         state.release(entity);
                         self.connecting = false;
                         state.insert_event(Event::new(WindowEvent::Redraw).target(Entity::root()));
-                        state.insert_event(Event::new(NodeEvent::ConnectOutput).direct(state.hovered).origin(entity));
-                        
+                        state.insert_event(
+                            Event::new(NodeEvent::ConnectOutput)
+                                .direct(state.hovered)
+                                .origin(entity),
+                        );
+
                         entity.set_z_order(state, 0);
                     }
                 }
 
-                WindowEvent::MouseMove(x,y) => {
+                WindowEvent::MouseMove(x, y) => {
                     if event.target == entity {
-                        state.insert_event(Event::new(NodeEvent::TrySnap(entity, state.hovered)).direct(state.hovered).origin(entity));
+                        state.insert_event(
+                            Event::new(NodeEvent::TrySnap(entity, state.hovered))
+                                .direct(state.hovered)
+                                .origin(entity),
+                        );
                         state.insert_event(Event::new(WindowEvent::Redraw).target(Entity::root()));
                         if state.hovered == self.snapped_socket {
                             self.snapping = true;
@@ -438,19 +498,21 @@ impl Widget for OutputSocket {
                             self.snapping = false;
                         }
                     }
-                    
-                } 
+                }
 
-                _=> {}
+                _ => {}
             }
         }
 
         if let Some(node_event) = event.message.downcast() {
             match node_event {
-
                 NodeEvent::ConnectInput => {
                     if event.target == entity {
-                        state.insert_event(Event::new(NodeEvent::ConnectOutput).direct(event.origin).origin(entity));
+                        state.insert_event(
+                            Event::new(NodeEvent::ConnectOutput)
+                                .direct(event.origin)
+                                .origin(entity),
+                        );
                     }
                 }
 
@@ -459,7 +521,11 @@ impl Widget for OutputSocket {
                 }
 
                 NodeEvent::TrySnap(input, output) => {
-                    state.insert_event(Event::new(NodeEvent::Snap(*input, *output)).direct(event.origin).origin(entity));
+                    state.insert_event(
+                        Event::new(NodeEvent::Snap(*input, *output))
+                            .direct(event.origin)
+                            .origin(entity),
+                    );
                 }
 
                 NodeEvent::Disconnect => {
@@ -471,7 +537,7 @@ impl Widget for OutputSocket {
                     }
                 }
 
-                _=> {}
+                _ => {}
             }
         }
     }
@@ -563,8 +629,15 @@ impl Widget for OutputSocket {
 
         let origin = state.data.get_origin(entity);
         let transform = state.data.get_transform(entity);
-        
-        canvas.set_transform(transform[0], transform[1], transform[2], transform[3], transform[4], transform[5]);
+
+        canvas.set_transform(
+            transform[0],
+            transform[1],
+            transform[2],
+            transform[3],
+            transform[4],
+            transform[5],
+        );
 
         canvas.translate(bounds.x, bounds.y);
 
@@ -600,38 +673,42 @@ impl Widget for OutputSocket {
 
         canvas.restore();
 
-        
-
         if self.connecting {
-
             let transform = state.data.get_transform(entity);
-            let (px, py) = transform.transform_point(bounds.x + bounds.w / 2.0, bounds.y + bounds.h / 2.0);
+            let (px, py) =
+                transform.transform_point(bounds.x + bounds.w / 2.0, bounds.y + bounds.h / 2.0);
 
             let mut path = Path::new();
             path.move_to(px, py);
             if self.snapping {
                 let snapped_socket = state.data.get_bounds(state.hovered);
-                let (sx, sy) = transform.transform_point(snapped_socket.x + snapped_socket.w / 2.0, snapped_socket.y + snapped_socket.h / 2.0);
+                let (sx, sy) = transform.transform_point(
+                    snapped_socket.x + snapped_socket.w / 2.0,
+                    snapped_socket.y + snapped_socket.h / 2.0,
+                );
                 let mid_x = (sx - px) / 2.0;
                 path.bezier_to(sx - mid_x, py, px + mid_x, sy, sx, sy);
                 //path.line_to(sx, sy);
                 let mut paint = Paint::color(femtovg::Color::rgb(200, 200, 200));
                 paint.set_line_width(2.0);
                 canvas.stroke_path(&mut path, paint);
-
             } else {
-                
                 //transform.inverse();
                 //let (mx, my) = transform.transform_point(state.mouse.cursorx, state.mouse.cursory);
                 let mid_x = (state.mouse.cursorx - px) / 2.0;
-                path.bezier_to(state.mouse.cursorx - mid_x, py, px + mid_x, state.mouse.cursory, state.mouse.cursorx, state.mouse.cursory);
+                path.bezier_to(
+                    state.mouse.cursorx - mid_x,
+                    py,
+                    px + mid_x,
+                    state.mouse.cursory,
+                    state.mouse.cursorx,
+                    state.mouse.cursory,
+                );
                 //path.line_to(state.mouse.cursorx, state.mouse.cursory);
                 let mut paint = Paint::color(femtovg::Color::rgb(200, 200, 200));
                 paint.set_line_width(2.0);
                 canvas.stroke_path(&mut path, paint);
-
             }
-            
         }
 
         //canvas.restore();
@@ -720,8 +797,15 @@ fn draw_socket(state: &mut State, entity: Entity, canvas: &mut Canvas<OpenGl>) {
 
     let origin = state.data.get_origin(entity);
     let transform = state.data.get_transform(entity);
-    
-    canvas.set_transform(transform[0], transform[1], transform[2], transform[3], transform[4], transform[5]);
+
+    canvas.set_transform(
+        transform[0],
+        transform[1],
+        transform[2],
+        transform[3],
+        transform[4],
+        transform[5],
+    );
 
     canvas.translate(bounds.x, bounds.y);
 

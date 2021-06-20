@@ -1,16 +1,10 @@
-
-
 use tuix::*;
 
-pub struct WaveView {
-
-}
+pub struct WaveView {}
 
 impl WaveView {
     pub fn new() -> Self {
-        Self {
-
-        }
+        Self {}
     }
 }
 

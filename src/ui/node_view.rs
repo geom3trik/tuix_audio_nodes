@@ -1,18 +1,22 @@
-
-
 use tuix::*;
 
 use rand::Rng;
 
 use femtovg::{
-    Canvas, renderer::OpenGl, Align, Baseline, FillRule, FontId, ImageFlags, ImageId, LineCap, LineJoin,
-    Paint, Path, Renderer, Solidity,
+    renderer::OpenGl, Align, Baseline, Canvas, FillRule, FontId, ImageFlags, ImageId, LineCap,
+    LineJoin, Paint, Path, Renderer, Solidity,
 };
 
 use super::node_widget::*;
 use super::socket_widget::*;
 
 use super::NodeEvent;
+
+enum NodeState {
+    Normal,
+    Moving,
+    
+}
 
 pub struct NodeView {
     translate_x: f32,
@@ -26,6 +30,9 @@ pub struct NodeView {
     canvas: Entity,
 
     selected_nodes: Vec<Entity>,
+
+    // Is the user holding the ctrl key?
+    ctrl: bool,
 }
 
 impl NodeView {
@@ -42,6 +49,8 @@ impl NodeView {
             canvas: Entity::null(),
 
             selected_nodes: Vec::new(),
+
+            ctrl: false,
         }
     }
 }
@@ -50,58 +59,53 @@ impl Widget for NodeView {
     type Ret = Entity;
 
     fn on_build(&mut self, state: &mut State, entity: Entity) -> Self::Ret {
-
-        self.canvas = Element::new().build(state, entity, |builder| 
-            builder
-            .set_clip_widget(entity)
-            //.set_background_color(Color::rgb(50,50,200))
+        self.canvas = Element::new().build(
+            state,
+            entity,
+            |builder| builder.set_clip_widget(entity), //.set_background_color(Color::rgb(50,50,200))
         );
 
-        let sine = NodeWidget::new("Sine").build(state, self.canvas, |builder| 
-            builder
-        );
+        let sine = NodeWidget::new("Sine").build(state, self.canvas, |builder| builder);
 
-        let row = Row::new().build(state, sine, |builder| 
+        let row = Row::new().build(state, sine, |builder| {
             builder
                 .set_height(Pixels(30.0))
                 .set_child_space(Stretch(1.0))
-        );
+                .set_hoverability(false)
+        });
 
-        Label::new("Out").build(state, row, |builder| 
+        Label::new("Out").build(state, row, |builder| {
             builder
                 .set_child_space(Stretch(1.0))
                 .set_child_right(Pixels(5.0))
                 .set_space(Pixels(0.0))
                 .set_hoverability(false)
-        );
+        });
 
-        OutputSocket::new().build(state, row, |builder| 
-            builder
-                .set_left(Stretch(0.0))
-                .set_right(Pixels(-10.0))
-        );
+        OutputSocket::new().build(state, row, |builder| {
+            builder.set_left(Stretch(0.0)).set_right(Pixels(-10.0))
+        });
 
-        let row = Row::new().build(state, sine, |builder| 
+        let row = Row::new().build(state, sine, |builder| {
             builder
                 .set_height(Pixels(30.0))
                 .set_child_space(Stretch(1.0))
-        );
-    
-        InputSocket::new().build(state, row, |builder| 
-            builder
-                .set_left(Pixels(-10.0))
-                .set_right(Stretch(0.0))
-        );
-    
-        Label::new("Freq").build(state, row, |builder| 
+                .set_hoverability(false)
+        });
+
+        InputSocket::new().build(state, row, |builder| {
+            builder.set_left(Pixels(-10.0)).set_right(Stretch(0.0))
+        });
+
+        Label::new("Freq").build(state, row, |builder| {
             builder
                 .set_child_space(Stretch(1.0))
                 .set_child_left(Pixels(5.0))
                 .set_space(Pixels(0.0))
                 .set_hoverability(false)
-        );
+        });
 
-        Textbox::new("440").build(state, row, |builder| 
+        Textbox::new("440").build(state, row, |builder| {
             builder
                 .set_child_space(Stretch(1.0))
                 .set_child_left(Pixels(5.0))
@@ -110,84 +114,77 @@ impl Widget for NodeView {
                 .set_right(Pixels(5.0))
                 .set_color(Color::white())
                 .set_opacity(1.0)
-        );
+        });
 
-        let amplify = NodeWidget::new("Amplify").build(state, self.canvas, |builder| 
-            builder
-                .set_left(Pixels(200.0))
-                .set_top(Pixels(200.0))
-        );
+        let amplify = NodeWidget::new("Amplify").build(state, self.canvas, |builder| {
+            builder.set_left(Pixels(200.0)).set_top(Pixels(200.0))
+        });
 
-        let row = Row::new().build(state, amplify, |builder| 
+        let row = Row::new().build(state, amplify, |builder| {
             builder
                 .set_height(Pixels(30.0))
                 .set_child_space(Stretch(1.0))
-        );
-    
-        InputSocket::new().build(state, row, |builder| 
-            builder
-                .set_left(Pixels(-10.0))
-                .set_right(Stretch(0.0))
-        );
-    
-        Label::new("In").build(state, row, |builder| 
+                .set_hoverability(false)
+        });
+
+        InputSocket::new().build(state, row, |builder| {
+            builder.set_left(Pixels(-10.0)).set_right(Stretch(0.0))
+        });
+
+        Label::new("In").build(state, row, |builder| {
             builder
                 .set_child_space(Stretch(1.0))
                 .set_child_left(Pixels(5.0))
                 .set_space(Pixels(0.0))
                 .set_hoverability(false)
-        );
+        });
 
-        let row = Row::new().build(state, amplify, |builder| 
+        let row = Row::new().build(state, amplify, |builder| {
             builder
                 .set_height(Pixels(30.0))
                 .set_child_space(Stretch(1.0))
-        );
+                .set_hoverability(false)
+        });
 
-        Label::new("Out").build(state, row, |builder| 
+        Label::new("Out").build(state, row, |builder| {
             builder
                 .set_child_space(Stretch(1.0))
                 .set_child_right(Pixels(5.0))
                 .set_space(Pixels(0.0))
                 .set_hoverability(false)
-        );
+        });
 
-        OutputSocket::new().build(state, row, |builder| 
-            builder
-                .set_left(Stretch(0.0))
-                .set_right(Pixels(-10.0))
-        );
+        OutputSocket::new().build(state, row, |builder| {
+            builder.set_left(Stretch(0.0)).set_right(Pixels(-10.0))
+        });
 
-        let output = NodeWidget::new("Output").build(state, self.canvas, |builder| 
-            builder
-                .set_left(Pixels(300.0))
-                .set_top(Pixels(300.0))
-        );
+        let output = NodeWidget::new("Output").build(state, self.canvas, |builder| {
+            builder.set_left(Pixels(300.0)).set_top(Pixels(300.0))
+        });
 
-        let row = Row::new().build(state, output, |builder| 
+        let row = Row::new().build(state, output, |builder| {
             builder
                 .set_height(Pixels(30.0))
                 .set_child_space(Stretch(1.0))
-        );
-    
-        InputSocket::new().build(state, row, |builder| 
-            builder
-                .set_left(Pixels(-10.0))
-                .set_right(Stretch(0.0))
-        );
-    
-        Label::new("In").build(state, row, |builder| 
+                .set_hoverability(false)
+        });
+
+        InputSocket::new().build(state, row, |builder| {
+            builder.set_left(Pixels(-10.0)).set_right(Stretch(0.0))
+        });
+
+        Label::new("In").build(state, row, |builder| {
             builder
                 .set_child_space(Stretch(1.0))
                 .set_child_left(Pixels(5.0))
                 .set_space(Pixels(0.0))
                 .set_hoverability(false)
-        );
+        });
 
         // for i in 1..800 {
         //     let rand_x = rand::thread_rng().gen_range(0, 800);
         //     let rand_y = rand::thread_rng().gen_range(0,600);
-        //     NodeWidget::new().build(state, entity, |builder| 
+        //     NodeWidget::new().build(state, entity, |builder|
         //         builder
         //             .set_left(Pixels(rand_x as f32))
         //             .set_top(Pixels(rand_y as f32))
@@ -201,19 +198,25 @@ impl Widget for NodeView {
     }
 
     fn on_event(&mut self, state: &mut State, entity: Entity, event: &mut Event) {
-        
         if let Some(window_event) = event.message.downcast() {
             match window_event {
-
-                
                 WindowEvent::MouseDown(button) => {
                     //if event.target == entity {
-                        if *button == MouseButton::Middle {
-                            self.panning = true;
-                            state.capture(entity);
-                            self.prev_translate_x = self.translate_x;
-                            self.prev_translate_y = self.translate_y;
+                    if *button == MouseButton::Middle {
+                        self.panning = true;
+                        state.capture(entity);
+                        self.prev_translate_x = self.translate_x;
+                        self.prev_translate_y = self.translate_y;
+                    }
+
+                    if *button == MouseButton::Left {
+                        if event.target == self.canvas {
+                            for selected_node in self.selected_nodes.iter() {
+                                selected_node.set_checked(state, false);
+                            }
+                            self.selected_nodes.clear();
                         }
+                    }
                     //}
                 }
 
@@ -235,13 +238,13 @@ impl Widget for NodeView {
                         self.translate_x = self.prev_translate_x + dx;
                         self.translate_y = self.prev_translate_y + dy;
                         //println!("x: {}, y: {}", self.translate_x, self.translate_y);
-                        self.canvas.set_translate(state, (self.translate_x, self.translate_y));
+                        self.canvas
+                            .set_translate(state, (self.translate_x, self.translate_y));
                         state.insert_event(Event::new(WindowEvent::Redraw).target(Entity::root()));
                     }
-
                 }
 
-                WindowEvent::MouseScroll(x,y) => {
+                WindowEvent::MouseScroll(x, y) => {
                     self.scale += 0.1 * *y as f64;
                     if self.scale >= 2.0 {
                         self.scale = 2.0;
@@ -251,36 +254,52 @@ impl Widget for NodeView {
                         self.scale = 0.5;
                     }
 
-
-
                     self.canvas.set_scale(state, self.scale as f32);
                     //println!("scale: {}", self.scale);
                 }
 
                 WindowEvent::KeyDown(code, key) => {
                     println!("Key: {:?} {:?}", code, key);
-                    match *code {
+                    match *key {
+                        Some(Key::Control) => {
+                            self.ctrl = true;
+                        }
+                        _ => {}
+                    }
+                }
 
+                WindowEvent::KeyUp(code, key) => {
+                    match *key {
+                        Some(Key::Control) => {
+                            self.ctrl = false;
+                        }
 
                         _=> {}
                     }
                 }
 
-                _=> {}
+                _ => {}
             }
         }
-    
+
         if let Some(node_event) = event.message.downcast() {
             match node_event {
                 NodeEvent::SelectNode(node) => {
+                    if !self.ctrl {
+                        for selected_node in self.selected_nodes.iter() {
+                            selected_node.set_checked(state, false);
+                        }
+                        self.selected_nodes.clear();
+                    }
+                    node.set_checked(state, true);
                     self.selected_nodes.push(*node);
                 }
 
                 NodeEvent::DeselectNode(node) => {
-                    
+
                 }
 
-                _=> {}
+                _ => {}
             }
         }
     }
