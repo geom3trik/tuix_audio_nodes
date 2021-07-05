@@ -127,7 +127,7 @@ impl Widget for InputSocket {
                         state.capture(entity);
                         self.connecting = true;
                         //state.insert_event(Event::new(WindowEvent::Redraw).target(Entity::root()));
-                        entity.emit(state, Entity::root(), Event::new(WindowEvent::Redraw));
+                        entity.emit_to(state, Entity::root(), WindowEvent::Redraw);
                         entity.set_z_order(state, 1);
                     }
                 }
@@ -139,7 +139,7 @@ impl Widget for InputSocket {
                             state.insert_event(Event::new(WindowEvent::Redraw).target(Entity::root()));
                             //state.insert_event(Event::new(NodeEvent::ConnectSockets(entity, state.hovered)).direct(state.hovered).origin(entity));
                             //state.insert_event(Event::new(NodeEvent::ConnectInput).direct(state.hovered).origin(entity));
-                            entity.emit(state, state.hovered, Event::new(NodeEvent::ConnectInput));
+                            entity.emit_to(state, state.hovered, NodeEvent::ConnectInput);
                             entity.set_z_order(state, 0);                            
                         }
                         state.release(entity);

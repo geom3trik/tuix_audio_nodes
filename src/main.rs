@@ -34,11 +34,11 @@ fn main() {
         let column = Column::new().build(state, window, |builder| builder);
         
 
-        WaveView::new().build(state, column, |builder| 
-            builder
-                .set_background_color(Color::rgb(35,35,35))
-                .set_text("Waveform editor will go here")
-        );
+        // WaveView::new().build(state, column, |builder| 
+        //     builder
+        //         .set_background_color(Color::rgb(35,35,35))
+        //         .set_text("Waveform editor will go here")
+        // );
 
         NodeView::new().build(state, column, |builder| {
             builder
