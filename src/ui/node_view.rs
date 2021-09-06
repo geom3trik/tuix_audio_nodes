@@ -2,13 +2,6 @@
 
 use tuix::*;
 
-use rand::Rng;
-
-use femtovg::{
-    Canvas, renderer::OpenGl, Align, Baseline, FillRule, FontId, ImageFlags, ImageId, LineCap, LineJoin,
-    Paint, Path, Renderer, Solidity,
-};
-
 use super::node_widget::*;
 use super::socket_widget::*;
 
@@ -42,6 +35,7 @@ impl NodeView {
 
 impl Widget for NodeView {
     type Ret = Entity;
+    type Data = ();
 
     fn on_build(&mut self, state: &mut State, entity: Entity) -> Self::Ret {
 
@@ -66,7 +60,7 @@ impl Widget for NodeView {
                 .set_child_space(Stretch(1.0))
                 .set_child_right(Pixels(5.0))
                 .set_space(Pixels(0.0))
-                .set_hoverability(false)
+                .set_hoverable(false)
         );
 
         OutputSocket::new().build(state, row, |builder| 
@@ -92,7 +86,7 @@ impl Widget for NodeView {
                 .set_child_space(Stretch(1.0))
                 .set_child_left(Pixels(5.0))
                 .set_space(Pixels(0.0))
-                .set_hoverability(false)
+                .set_hoverable(false)
         );
 
         Textbox::new("440").build(state, row, |builder| 
@@ -129,7 +123,7 @@ impl Widget for NodeView {
                 .set_child_space(Stretch(1.0))
                 .set_child_left(Pixels(5.0))
                 .set_space(Pixels(0.0))
-                .set_hoverability(false)
+                .set_hoverable(false)
         );
 
         let row = Row::new().build(state, amplify, |builder| 
@@ -143,7 +137,7 @@ impl Widget for NodeView {
                 .set_child_space(Stretch(1.0))
                 .set_child_right(Pixels(5.0))
                 .set_space(Pixels(0.0))
-                .set_hoverability(false)
+                .set_hoverable(false)
         );
 
         OutputSocket::new().build(state, row, |builder| 
@@ -175,7 +169,7 @@ impl Widget for NodeView {
                 .set_child_space(Stretch(1.0))
                 .set_child_left(Pixels(5.0))
                 .set_space(Pixels(0.0))
-                .set_hoverability(false)
+                .set_hoverable(false)
         );
 
         // for i in 1..800 {

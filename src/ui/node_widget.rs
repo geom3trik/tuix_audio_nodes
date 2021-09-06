@@ -62,7 +62,7 @@ impl NodeWidget {
                 .set_child_space(Stretch(1.0))
                 .set_child_left(Pixels(5.0))
                 .set_space(Pixels(0.0))
-                .set_hoverability(false)
+                .set_hoverable(false)
         );
     }
 
@@ -78,7 +78,7 @@ impl NodeWidget {
                 .set_child_space(Stretch(1.0))
                 .set_child_right(Pixels(5.0))
                 .set_space(Pixels(0.0))
-                .set_hoverability(false)
+                .set_hoverable(false)
         );
 
         OutputSocket::new().build(state, row, |builder| 
@@ -91,6 +91,7 @@ impl NodeWidget {
 
 impl Widget for NodeWidget {
     type Ret = Entity;
+    type Data = ();
     fn on_build(&mut self, state: &mut State, entity: Entity) -> Self::Ret {
 
         Label::new(&self.name).build(state, entity, |builder|
@@ -99,9 +100,9 @@ impl Widget for NodeWidget {
                 .set_child_space(Stretch(1.0))
                 //.set_background_color(Color::rgb(50, 50, 200))
                 //.set_border_radius(Pixels(3.0))
-                //.set_border_radius_top_left(Pixels(3.0))
-                //.set_border_radius_top_right(Pixels(3.0))
-                .set_hoverability(false)
+                .set_border_radius_top_left(Pixels(3.0))
+                .set_border_radius_top_right(Pixels(3.0))
+                .set_hoverable(false)
                 .class("node_label")
         );
 
@@ -120,7 +121,7 @@ impl Widget for NodeWidget {
             .set_left(state, Pixels(100.0))
             .set_top(state, Pixels(100.0))
             //.set_background_color(state, Color::rgb(50,50,50))
-            //.set_border_radius(state, Pixels(3.0))
+            .set_border_radius(state, Pixels(3.0))
             .set_border_width(state, Pixels(1.0))
             .set_border_color(state, Color::rgb(100, 100, 100))
             .set_position_type(state, PositionType::SelfDirected)

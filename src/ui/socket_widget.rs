@@ -1,7 +1,6 @@
 use tuix::*;
 use femtovg::{
-    Canvas, renderer::OpenGl, Align, Baseline, FillRule, FontId, ImageFlags, ImageId, LineCap, LineJoin,
-    Paint, Path, Renderer, Solidity,
+    Canvas, renderer::OpenGl, Paint, Path,
 };
 
 use super::NodeEvent;
@@ -24,6 +23,7 @@ impl ConnectionWidget {
 
 impl Widget for ConnectionWidget {
     type Ret = Entity;
+    type Data = ();
     fn on_build(&mut self, state: &mut State, entity: Entity) -> Self::Ret {
         entity.set_z_order(state, -1)
     }
@@ -95,6 +95,7 @@ impl InputSocket {
 
 impl Widget for InputSocket {
     type Ret = Entity;
+    type Data = ();
     fn on_build(&mut self, state: &mut State, entity: Entity) -> Self::Ret {
         Element::new().build(state, entity, |builder| 
             builder
@@ -103,13 +104,13 @@ impl Widget for InputSocket {
                 .set_border_radius(Pixels(5.0))
                 //.set_background_color(Color::rgb(200,40,40))
                 .set_space(Pixels(5.0))
-                .set_hoverability(false)
+                .set_hoverable(false)
                 .class("socket")
         );
 
         self.connection = ConnectionWidget::new(entity).build(state, entity, |builder| 
             builder
-                .set_hoverability(false)
+                .set_hoverable(false)
                 
         );
         
@@ -216,7 +217,7 @@ impl Widget for InputSocket {
         let opacity = state.data.get_opacity(entity);
 
         let parent = state
-            .hierarchy
+            .tree
             .get_parent(entity)
             .expect("Failed to find parent somehow");
 
@@ -387,6 +388,7 @@ impl OutputSocket {
 
 impl Widget for OutputSocket {
     type Ret = Entity;
+    type Data = ();
     fn on_build(&mut self, state: &mut State, entity: Entity) -> Self::Ret {
         Element::new().build(state, entity, |builder| 
             builder
@@ -395,7 +397,7 @@ impl Widget for OutputSocket {
                 .set_border_radius(Pixels(5.0))
                 //.set_background_color(Color::rgb(200,40,40))
                 .set_space(Pixels(5.0))
-                .set_hoverability(false)
+                .set_hoverable(false)
                 .class("socket")
         );
         
@@ -489,7 +491,7 @@ impl Widget for OutputSocket {
         let opacity = state.data.get_opacity(entity);
 
         let parent = state
-            .hierarchy
+            .tree
             .get_parent(entity)
             .expect("Failed to find parent somehow");
 
@@ -646,7 +648,7 @@ fn draw_socket(state: &mut State, entity: Entity, canvas: &mut Canvas<OpenGl>) {
     let opacity = state.data.get_opacity(entity);
 
     let parent = state
-        .hierarchy
+        .tree
         .get_parent(entity)
         .expect("Failed to find parent somehow");
 

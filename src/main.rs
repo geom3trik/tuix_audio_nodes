@@ -2,8 +2,6 @@ use tuix::*;
 use ui::*;
 
 pub mod ui;
-pub mod context;
-pub mod document;
 
 const STYLE: &str = r#"
     .node {
@@ -32,13 +30,6 @@ fn main() {
         window.set_background_color(state, Color::rgb(30,30,30));
 
         let column = Column::new().build(state, window, |builder| builder);
-        
-
-        // WaveView::new().build(state, column, |builder| 
-        //     builder
-        //         .set_background_color(Color::rgb(35,35,35))
-        //         .set_text("Waveform editor will go here")
-        // );
 
         NodeView::new().build(state, column, |builder| {
             builder
